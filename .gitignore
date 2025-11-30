@@ -1,0 +1,8 @@
+# Ignore other repositories
+repos/alx_travel_app_0x00/
+repos/alx-airbnb-database/
+repos/alx-airbnb-project-documentation/
+repos/alx-backend-python/
+
+# Exception for the specific directory I'm working in
+!repos/alx-backend-python/Django-signals_orm-0x04/

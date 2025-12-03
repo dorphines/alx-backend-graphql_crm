@@ -1,0 +1,46 @@
+#!/bin/bash
+
+POKEMON_LIST=("bulbasaur" "ivysaur" "venusaur" "charmander" "charmeleon")
+OUTPUT_DIR="pokemon_data_parallel"
+API_BASE_URL="https://pokeapi.co/api/v2/pokemon/"
+
+# Create output directory if it doesn't exist
+mkdir -p "${OUTPUT_DIR}"
+
+# Function to fetch data for a single Pokémon
+fetch_pokemon() {
+  local pokemon_name=$1
+  local api_url="${API_BASE_URL}${pokemon_name}"
+  local output_file="${OUTPUT_DIR}/${pokemon_name}.json"
+
+  echo "Starting fetch for ${pokemon_name}..."
+  if curl -s --fail -o "${output_file}" "${api_url}"; then
+    echo "Finished fetch for ${pokemon_name} ✅"
+    return 0
+  else
+    echo "Failed to fetch data for ${pokemon_name} ❌"
+    return 1
+  fi
+}
+
+pids=() # Array to store background process IDs
+
+# Start all fetch processes in the background
+for pokemon in "${POKEMON_LIST[@]}"; do
+  fetch_pokemon "${pokemon}" &
+  pids+=($!) # Save the PID of the background process
+done
+
+echo "All Pokémon fetch jobs started in the background."
+echo "Waiting for all jobs to complete..."
+
+# Wait for all background processes to complete
+for pid in "${pids[@]}"; do
+  wait "${pid}"
+  if [ $? -ne 0 ]; then
+    echo "A fetch job failed. See logs above for details."
+  fi
+done
+
+echo "All Pokémon data has been fetched."
+echo "You can find the data in the '${OUTPUT_DIR}' directory."

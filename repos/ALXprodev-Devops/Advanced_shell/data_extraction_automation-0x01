@@ -1,0 +1,27 @@
+#!/bin/bash
+
+DATA_FILE="data.json"
+
+# Check if data.json exists
+if [ ! -f "${DATA_FILE}" ]; then
+  echo "Error: ${DATA_FILE} not found. Please run Task 0 first."
+  exit 1
+fi
+
+# Extract name, height, weight, and first type using jq
+# Height and weight are in decimetres and hectograms, convert to meters and kilograms
+POKEMON_INFO=$(cat "${DATA_FILE}" | jq -r '
+  .name as $name |
+  (.height / 10) as $height_m |
+  (.weight / 10) as $weight_kg |
+  .types[0].type.name as $type_name |
+  (
+    ($name | ascii_upcase | .[0:1]) +
+    ($name | ascii_downcase | .[1:]) +
+    " is of type " +
+    (($type_name | ascii_upcase | .[0:1]) + ($type_name | ascii_downcase | .[1:])) +
+    ", weighs \($weight_kg)kg, and is \($height_m)m tall."
+  )
+')
+
+echo "${POKEMON_INFO}"

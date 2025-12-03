@@ -1,0 +1,51 @@
+#!/bin/bash
+
+POKEMON_LIST=("bulbasaur" "ivysaur" "venusaur" "charmander" "charmeleon" "invalidpokemon") # Added an invalid name to test error handling
+OUTPUT_DIR="pokemon_data"
+ERROR_LOG="error.log"
+API_BASE_URL="https://pokeapi.co/api/v2/pokemon/"
+DELAY_SECONDS=1
+MAX_RETRIES=3
+RETRY_DELAY=2
+
+# Create output directory if it doesn't exist
+mkdir -p "${OUTPUT_DIR}"
+
+echo "Starting batch data retrieval for Pokémon..."
+
+for pokemon_name in "${POKEMON_LIST[@]}"; do
+  API_URL="${API_BASE_URL}${pokemon_name}"
+  OUTPUT_FILE="${OUTPUT_DIR}/${pokemon_name}.json"
+  attempt=1
+  success=false
+
+  echo "Fetching data for ${pokemon_name}..."
+
+  while [ ${attempt} -le ${MAX_RETRIES} ]; do
+    # Use curl with --fail to exit with an error code on HTTP failure (like 404)
+    if curl -s --fail -o "${OUTPUT_FILE}" "${API_URL}"; then
+      if [ -s "${OUTPUT_FILE}" ]; then
+        echo "Saved data to ${OUTPUT_FILE} ✅"
+        success=true
+        break
+      else
+        echo "Attempt ${attempt}/${MAX_RETRIES}: Failed to save data for ${pokemon_name} (received empty response). Retrying in ${RETRY_DELAY}s..."
+        rm -f "${OUTPUT_FILE}" # Clean up empty file
+      fi
+    else
+      echo "Attempt ${attempt}/${MAX_RETRIES}: Failed to fetch data for ${pokemon_name} (HTTP error). Retrying in ${RETRY_DELAY}s..."
+    fi
+
+    attempt=$((attempt + 1))
+    sleep "${RETRY_DELAY}"
+  done
+
+  if [ "${success}" = false ]; then
+    echo "All attempts failed for ${pokemon_name}. Logging error and skipping. ❌"
+    echo "$(date): Failed to fetch data for ${pokemon_name} from ${API_URL} after ${MAX_RETRIES} attempts." >> "${ERROR_LOG}"
+  fi
+
+  sleep "${DELAY_SECONDS}" # Delay between different Pokémon
+done
+
+echo "Batch data retrieval complete."

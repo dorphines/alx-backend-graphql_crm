@@ -23,9 +23,9 @@ from graphene_django.filter import DjangoFilterConnectionField
 from .filters import CustomerFilter, ProductFilter, OrderFilter
 
 class Query(graphene.ObjectType):
-    all_customers = DjangoFilterConnectionField(CustomerType, filterset_class=CustomerFilter)
-    all_products = DjangoFilterConnectionField(ProductType, filterset_class=ProductFilter)
-    all_orders = DjangoFilterConnectionField(OrderType, filterset_class=OrderFilter)
+    all_customers = DjangoFilterConnectionField(CustomerType, filterset_class=CustomerFilter, order_by=graphene.List(of_type=graphene.String))
+    all_products = DjangoFilterConnectionField(ProductType, filterset_class=ProductFilter, order_by=graphene.List(of_type=graphene.String))
+    all_orders = DjangoFilterConnectionField(OrderType, filterset_class=OrderFilter, order_by=graphene.List(of_type=graphene.String))
 
 class CustomerInput(graphene.InputObjectType):
     name = graphene.String(required=True)
@@ -44,7 +44,7 @@ class CreateCustomer(graphene.Mutation):
         if Customer.objects.filter(email=input.email).exists():
             raise Exception("Email already exists.")
 
-        phone_pattern = re.compile(r"^\+?[1-9]\d{1,14}$")
+        phone_pattern = re.compile(r"^(\+?\d{1,3})?[-.\s]?(\()?(\d{3})(\))?[-.\s]?(\d{3})[-.\s]?(\d{4})$")
         if input.phone and not phone_pattern.match(input.phone):
             raise Exception("Invalid phone number format.")
 
@@ -64,21 +64,20 @@ class BulkCreateCustomers(graphene.Mutation):
         successful_customers = []
         error_messages = []
 
-        with transaction.atomic():
-            for i, customer_data in enumerate(input):
-                try:
-                    if Customer.objects.filter(email=customer_data.email).exists():
-                        raise Exception(f"Customer {i}: Email already exists.")
+        for i, customer_data in enumerate(input):
+            try:
+                if Customer.objects.filter(email=customer_data.email).exists():
+                    raise Exception(f"Customer {i}: Email already exists.")
 
-                    phone_pattern = re.compile(r"^\+?[1-9]\d{1,14}$")
-                    if customer_data.phone and not phone_pattern.match(customer_data.phone):
-                        raise Exception(f"Customer {i}: Invalid phone number format.")
+                phone_pattern = re.compile(r"^(\+?\d{1,3})?[-.\s]?(\()?(\d{3})(\))?[-.\s]?(\d{3})[-.\s]?(\d{4})$")
+                if customer_data.phone and not phone_pattern.match(customer_data.phone):
+                    raise Exception(f"Customer {i}: Invalid phone number format.")
 
-                    customer = Customer(name=customer_data.name, email=customer_data.email, phone=customer_data.phone)
-                    customer.save()
-                    successful_customers.append(customer)
-                except Exception as e:
-                    error_messages.append(str(e))
+                customer = Customer(name=customer_data.name, email=customer_data.email, phone=customer_data.phone)
+                customer.save()
+                successful_customers.append(customer)
+            except Exception as e:
+                error_messages.append(str(e))
         
         return BulkCreateCustomers(customers=successful_customers, errors=error_messages)
 
@@ -117,8 +116,9 @@ class CreateOrder(graphene.Mutation):
 
     @staticmethod
     def mutate(root, info, input):
-        customer = Customer.objects.get(pk=input.customer_id)
-        if not customer:
+        try:
+            customer = Customer.objects.get(pk=input.customer_id)
+        except Customer.DoesNotExist:
             raise Exception("Invalid customer ID.")
 
         if not input.product_ids:
@@ -126,10 +126,11 @@ class CreateOrder(graphene.Mutation):
 
         products = []
         for product_id in input.product_ids:
-            product = Product.objects.get(pk=product_id)
-            if not product:
+            try:
+                product = Product.objects.get(pk=product_id)
+                products.append(product)
+            except Product.DoesNotExist:
                 raise Exception(f"Invalid product ID: {product_id}")
-            products.append(product)
 
         order = Order(customer=customer, order_date=input.order_date)
         order.save()

@@ -4,8 +4,11 @@ This project is a Customer Relationship Management (CRM) system built with Djang
 
 ## Project Structure
 
-- `alx_backend_graphql_crm/`: The main Django project directory.
 - `crm/`: The Django app that contains the core CRM logic.
+- `settings.py`: The Django settings file.
+- `urls.py`: The Django URL configuration.
+- `wsgi.py`: The WSGI configuration.
+- `schema.py`: The main GraphQL schema.
 - `manage.py`: The Django management script.
 - `db.sqlite3`: The SQLite database file.
 

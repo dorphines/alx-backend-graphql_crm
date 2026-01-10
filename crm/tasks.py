@@ -38,7 +38,7 @@ def generate_crm_report():
     result = schema.execute(query_full)
     
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    log_file_path = '/tmp/crmreportlog.txt'
+    log_file_path = '/tmp/crm_report_log.txt'
     
     if result.errors:
         log_message = f"{timestamp} - Report generation failed: {result.errors}\n"

@@ -8,16 +8,19 @@ class CustomerType(DjangoObjectType):
     class Meta:
         model = Customer
         fields = ("id", "name", "email", "phone", "created_at")
+        interfaces = (graphene.relay.Node, )
 
 class ProductType(DjangoObjectType):
     class Meta:
         model = Product
         fields = ("id", "name", "price", "stock")
+        interfaces = (graphene.relay.Node, )
 
 class OrderType(DjangoObjectType):
     class Meta:
         model = Order
         fields = ("id", "customer", "order_date", "total_amount", "products")
+        interfaces = (graphene.relay.Node, )
 
 from graphene_django.filter import DjangoFilterConnectionField
 from .filters import CustomerFilter, ProductFilter, OrderFilter
@@ -140,8 +143,26 @@ class CreateOrder(graphene.Mutation):
         return CreateOrder(order=order)
 
 
+class UpdateLowStockProducts(graphene.Mutation):
+    products = graphene.List(ProductType)
+    message = graphene.String()
+
+    @staticmethod
+    def mutate(root, info):
+        low_stock_products = Product.objects.filter(stock__lt=10)
+        updated_products = []
+        
+        for product in low_stock_products:
+            product.stock += 10
+            product.save()
+            updated_products.append(product)
+            
+        return UpdateLowStockProducts(products=updated_products, message="Low stock products updated successfully.")
+
+
 class Mutation(graphene.ObjectType):
     create_customer = CreateCustomer.Field()
     bulk_create_customers = BulkCreateCustomers.Field()
     create_product = CreateProduct.Field()
     create_order = CreateOrder.Field()
+    update_low_stock_products = UpdateLowStockProducts.Field()

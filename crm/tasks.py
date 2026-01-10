@@ -1,5 +1,6 @@
 from celery import shared_task
-import datetime
+from datetime import datetime
+import requests
 from schema import schema
 
 @shared_task
@@ -36,7 +37,7 @@ def generate_crm_report():
 
     result = schema.execute(query_full)
     
-    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     log_file_path = '/tmp/crmreportlog.txt'
     
     if result.errors:
@@ -57,6 +58,13 @@ def generate_crm_report():
                 revenue += float(amount)
         
         log_message = f"{timestamp} - Report: {total_customers} customers, {total_orders} orders, {revenue} revenue.\n"
+
+    # Use requests to simulate sending the report to an external service
+    try:
+        # Placeholder for an actual endpoint
+        requests.post("http://localhost:8000/api/report-log", json={"message": log_message})
+    except requests.exceptions.RequestException:
+        pass
 
     with open(log_file_path, 'a') as f:
         f.write(log_message)

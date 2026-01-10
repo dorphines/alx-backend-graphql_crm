@@ -3,7 +3,7 @@ import datetime
 from schema import schema
 
 @shared_task
-def generatecrmreport():
+def generate_crm_report():
     query = """
     {
         allCustomers {

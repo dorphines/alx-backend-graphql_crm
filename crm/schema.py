@@ -5,23 +5,35 @@ from crm.models import Product
 import re
 from django.db import transaction
 
+class CountableConnection(graphene.Connection):
+    class Meta:
+        abstract = True
+
+    total_count = graphene.Int()
+
+    def resolve_total_count(root, info):
+        return root.length
+
 class CustomerType(DjangoObjectType):
     class Meta:
         model = Customer
         fields = ("id", "name", "email", "phone", "created_at")
         interfaces = (graphene.relay.Node, )
+        connection_class = CountableConnection
 
 class ProductType(DjangoObjectType):
     class Meta:
         model = Product
         fields = ("id", "name", "price", "stock")
         interfaces = (graphene.relay.Node, )
+        connection_class = CountableConnection
 
 class OrderType(DjangoObjectType):
     class Meta:
         model = Order
         fields = ("id", "customer", "order_date", "total_amount", "products")
         interfaces = (graphene.relay.Node, )
+        connection_class = CountableConnection
 
 from graphene_django.filter import DjangoFilterConnectionField
 from .filters import CustomerFilter, ProductFilter, OrderFilter

@@ -25,12 +25,6 @@ def update_low_stock():
     log_file_path = '/tmp/low_stock_updates_log.txt'
 
     try:
-        # Optionally, queries the GraphQL hello field to verify the endpoint is responsive.
-        hello_query = gql("{ hello }")
-        hello_result = client.execute(hello_query)
-        with open(log_file_path, 'a') as f:
-            f.write(f"[{timestamp}] Endpoint check: {hello_result.get('hello')}\n")
-
         # Execute the UpdateLowStockProducts mutation
         mutation = gql("""
             mutation {

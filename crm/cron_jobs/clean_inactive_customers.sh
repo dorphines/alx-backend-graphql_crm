@@ -1,7 +1,8 @@
 #!/bin/bash
 cd /home/dorfin/alx/repos/alx-backend-graphql_crm || exit
+source .venv/bin/activate
 
-output=$(python3 manage.py shell <<EOF
+output=$(python manage.py shell <<EOF
 from django.utils import timezone
 from datetime import timedelta
 from crm.models import Customer

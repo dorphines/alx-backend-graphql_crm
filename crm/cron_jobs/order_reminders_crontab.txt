@@ -1,1 +1,1 @@
-0 8 * * * python3 /home/dorfin/alx/repos/alx-backend-graphql_crm/crm/cron_jobs/send_order_reminders.py
+0 8 * * * /home/dorfin/alx/repos/alx-backend-graphql_crm/.venv/bin/python3 /home/dorfin/alx/repos/alx-backend-graphql_crm/crm/cron_jobs/send_order_reminders.py
